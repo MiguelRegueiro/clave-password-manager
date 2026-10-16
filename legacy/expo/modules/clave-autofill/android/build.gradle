@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'com.clave'
+version = '1.0.0'
+android {
+  namespace 'com.clave.autofill'
+  defaultConfig {
+    minSdkVersion 30
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+dependencies { testImplementation 'junit:junit:4.13.2' }

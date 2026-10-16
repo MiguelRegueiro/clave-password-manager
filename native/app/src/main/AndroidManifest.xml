@@ -1,0 +1,27 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <queries>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+    </queries>
+    <application android:label="Clave" android:icon="@drawable/ic_clave"
+        android:allowBackup="false" android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false" android:theme="@style/Theme.Clave">
+        <activity android:name="com.clave.vault.MainActivity" android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name="com.clave.autofill.ClaveAutofillService"
+            android:label="Clave" android:exported="true"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter><action android:name="android.service.autofill.AutofillService" /></intent-filter>
+            <meta-data android:name="android.autofill" android:resource="@xml/clave_autofill" />
+        </service>
+        <activity android:name="com.clave.autofill.AutofillActivity" android:exported="false"
+            android:excludeFromRecents="true" android:theme="@style/Theme.Clave"
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clave · prueba de autocompletado</title>
+    <style>
+      body {
+        font: 16px system-ui;
+        background: #f4f5f7;
+        color: #18181b;
+        max-width: 440px;
+        margin: 50px auto;
+        padding: 24px;
+      }
+      form {
+        display: grid;
+        gap: 14px;
+        padding: 24px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 14px;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 12px;
+        border: 1px solid #aaa;
+        border-radius: 8px;
+      }
+      button {
+        background: #18181b;
+        color: white;
+      }
+      nav {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      p {
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Prueba de autocompletado</h1>
+    <p>
+      Solo datos ficticios. No se envían ni guardan contraseñas en esta página.
+      Sírvela mediante HTTPS para probar Clave.
+    </p>
+    <nav>
+      <a href="?mode=reset">Restablecer</a
+      ><a href="?mode=login">Iniciar sesión</a
+      ><a href="?mode=change">Cambiar contraseña</a>
+    </nav>
+    <main id="content"></main>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const mode = params.get("mode") || "reset";
+      const content = document.getElementById("content");
+      if (params.has("done")) {
+        content.textContent =
+          "Formulario enviado. Esta página solo prueba la integración; no hay una cuenta ni autenticación real.";
+      } else {
+        content.innerHTML = `<form autocomplete="on">
+        <label>Usuario<input name="username" autocomplete="username" type="email" required></label>
+        ${mode === "change" ? '<label>Contraseña actual<input name="current_password" type="password" autocomplete="current-password" required></label>' : ""}
+        <label>${mode === "login" ? "Contraseña" : "Nueva contraseña"}<input name="password" type="password" autocomplete="${mode === "login" ? "current-password" : "new-password"}" required></label>
+        ${mode !== "login" ? '<label>Confirmar contraseña<input name="confirm_password" type="password" autocomplete="new-password" required></label>' : ""}
+        <button type="submit">${mode === "login" ? "Iniciar sesión" : "Guardar contraseña"}</button>
+      </form>`;
+        content.querySelector("form").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          if (
+            mode !== "login" &&
+            form.elements.password.value !==
+              form.elements.confirm_password.value
+          ) {
+            form.elements.confirm_password.setCustomValidity(
+              "Las contraseñas no coinciden.",
+            );
+            form.reportValidity();
+            form.elements.confirm_password.setCustomValidity("");
+            return;
+          }
+          // No submitted data enters a URL, log, storage or network request.
+          location.assign("?done=1");
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "clave-native",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional command aliases. Kotlin/Compose app, no npm dependencies.",
+  "scripts": {
+    "apk": "bash build-apk.sh",
+    "apk:local": "bash build-apk.sh",
+    "test": "bash build-apk.sh --test",
+    "check": "bash build-apk.sh --check"
+  }
+}

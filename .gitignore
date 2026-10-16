@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+artifacts/
+.toolchains/
+.signing/
+**/debug.keystore
+**/build/
+**/.gradle/
+**/local.properties
+/android/
+/ios/
+*.log
+.env*
+!.env.example

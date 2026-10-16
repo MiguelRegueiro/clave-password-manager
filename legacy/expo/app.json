@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Clave",
+    "slug": "clave-vault",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "clave",
+    "ios": { "bundleIdentifier": "com.clave.vault", "supportsTablet": true },
+    "android": { "package": "com.clave.vault", "allowBackup": false },
+    "plugins": [
+      "./plugins/withClaveAndroid",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Usa Face ID para acceder a tus contraseñas."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        { "faceIDPermission": "Usa Face ID para desbloquear tu bóveda." }
+      ]
+    ]
+  }
+}

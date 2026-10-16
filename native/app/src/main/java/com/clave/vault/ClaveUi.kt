@@ -65,7 +65,7 @@ private val LightPalette = lightColorScheme(
 )
 
 private val DarkPalette = darkColorScheme(
-    primary = Color(0xFFB6BBC1), onPrimary = Color(0xFF202226),
+    primary = Color(0xFF454A50), onPrimary = Color(0xFFF0F1F2),
     primaryContainer = Color(0xFF33373C), onPrimaryContainer = Color(0xFFF0F1F2),
     secondary = Color(0xFFC3C6CA), secondaryContainer = Color(0xFF34383D),
     background = Color(0xFF0D0F11), surface = Color(0xFF17191C),
@@ -118,8 +118,8 @@ private val DarkPalette = darkColorScheme(
         floatingActionButton = {
             if (document != null && screen in listOf("vault", "profiles") && draft == null && detail == null && !keyboardOpen) {
                 FloatingActionButton(onClick = { if (!busy) { if (screen == "profiles") creatingProfile = true else onNew("", profileFilter) } },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = RoundedCornerShape(20.dp)) {
                     Icon(painterResource(R.drawable.ic_plus), contentDescription = if (screen == "profiles") "Nuevo perfil" else "Nueva cuenta", modifier = Modifier.size(28.dp))
                 }
@@ -135,8 +135,8 @@ private val DarkPalette = darkColorScheme(
                 listOf("vault" to "Cuentas", "generator" to "Generar", "profiles" to "Perfiles", "settings" to "Ajustes").forEachIndexed { index, (key, label) ->
                     val active = screen == key
                     Surface(onClick = { if (!busy) onScreen(key) }, shape = RoundedCornerShape(26.dp),
-                        color = if (active) MaterialTheme.colorScheme.primary else Color.Transparent,
-                        contentColor = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (active) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+                        contentColor = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f).semantics { this.selected = active; role = Role.Tab }) {
                         Column(Modifier.heightIn(min = 56.dp).padding(horizontal = 4.dp, vertical = 5.dp),
                             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)) {
@@ -257,9 +257,11 @@ private val DarkPalette = darkColorScheme(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(entry.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(entry.username, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(entry.profile, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            if (entry.status == "pending") Text("· Pendiente", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (profile == null || entry.status == "pending") {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (profile == null) Text(entry.profile, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                if (entry.status == "pending") Text("· Pendiente", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                     Glyph(R.drawable.ic_chevron)
@@ -367,7 +369,7 @@ private val DarkPalette = darkColorScheme(
         val scheme = MaterialTheme.colorScheme
         Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = scheme.surfaceContainerHigh,
             shadowElevation = 4.dp, border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.32f))) {
-            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.fillMaxWidth().padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(if (visible) password else "•".repeat(length.toInt()), Modifier.fillMaxWidth(),
                     fontFamily = FontFamily.Monospace, fontSize = 16.sp, lineHeight = 23.sp,
                     softWrap = true, overflow = TextOverflow.Clip, letterSpacing = 0.sp)
@@ -385,20 +387,27 @@ private val DarkPalette = darkColorScheme(
                     style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
         }
+        val sliderColors = SliderDefaults.colors(
+            thumbColor = Color(0xFF969BA1),
+            activeTrackColor = Color(0xFF747A81),
+            inactiveTrackColor = Color(0xFF303439),
+        )
         Slider(value = length, onValueChange = { length = it }, valueRange = 12f..64f, steps = 0,
+            colors = sliderColors,
             onValueChangeFinished = { password = CredentialRules.password(length.toInt(), symbols) },
-            track = { state -> SliderDefaults.Track(sliderState = state, drawStopIndicator = null) })
+            track = { state -> SliderDefaults.Track(sliderState = state, colors = sliderColors, drawStopIndicator = null) })
         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Incluir símbolos", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
             Switch(checked = symbols, onCheckedChange = { symbols = it; password = CredentialRules.password(length.toInt(), it) })
         }
-        Button(onClick = { password = CredentialRules.password(length.toInt(), symbols); visible = false },
+        Button(onClick = { password = CredentialRules.password(length.toInt(), symbols) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = RoundedCornerShape(18.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 1.dp)) {
             Glyph(R.drawable.ic_refresh); Spacer(Modifier.width(10.dp)); Text("Generar otra", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         }
         OutlinedButton(onClick = { add(password) }, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(18.dp),
-            border = BorderStroke(1.dp, scheme.outline.copy(alpha = 0.55f))) {
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = scheme.onSurface),
+            border = BorderStroke(1.dp, scheme.outline.copy(alpha = 0.7f))) {
             Glyph(R.drawable.ic_plus); Spacer(Modifier.width(10.dp)); Text("Guardar cuenta", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -464,19 +473,33 @@ private val DarkPalette = darkColorScheme(
                     isError = duplicate, supportingText = if (duplicate) ({ Text("Ese perfil ya existe") }) else null)
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Color del perfil", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AccountAccent.entries.forEach { option ->
-                            val paint = accentPaint(option)
-                            Surface(onClick = { color = option }, enabled = !busy,
-                                shape = RoundedCornerShape(14.dp), color = if (option == color) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-                                border = BorderStroke(if (option == color) 2.dp else 1.dp,
-                                    if (option == color) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
-                                modifier = Modifier.semantics { selected = option == color; role = Role.RadioButton }) {
-                                Row(Modifier.padding(horizontal = 11.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                                    Surface(color = paint.container, shape = CircleShape, border = BorderStroke(1.dp, paint.text)) { Spacer(Modifier.size(16.dp)) }
-                                    Text(option.label, style = MaterialTheme.typography.labelLarge, fontWeight = if (option == color) FontWeight.Bold else FontWeight.Medium)
+                    Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        AccountAccent.entries.chunked(4).forEach { rowOptions ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                rowOptions.forEach { option ->
+                                    val swatch = when (option) {
+                                        AccountAccent.BLUE -> Color(0xFF4D8FFF)
+                                        AccountAccent.TEAL -> Color(0xFF36B69B)
+                                        AccountAccent.VIOLET -> Color(0xFFA77AE8)
+                                        AccountAccent.ROSE -> Color(0xFFE477A5)
+                                        AccountAccent.AMBER -> Color(0xFFE0B24F)
+                                        AccountAccent.CORAL -> Color(0xFFEE8066)
+                                        AccountAccent.INDIGO -> Color(0xFF7882E0)
+                                        AccountAccent.SLATE -> Color(0xFF9299A1)
+                                    }
+                                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                        Surface(onClick = { color = option }, enabled = !busy,
+                                            shape = CircleShape, color = swatch,
+                                            border = BorderStroke(if (option == color) 2.dp else 1.dp,
+                                                if (option == color) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant),
+                                            modifier = Modifier.size(48.dp).semantics {
+                                                contentDescription = option.label
+                                                selected = option == color
+                                                role = Role.RadioButton
+                                            }) { }
+                                    }
                                 }
+                                repeat(4 - rowOptions.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
@@ -486,7 +509,11 @@ private val DarkPalette = darkColorScheme(
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (original != null) OutlinedButton(onClick = { deleting = true }, enabled = !busy && canDelete,
-                        shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f)) { Glyph(R.drawable.ic_trash); Spacer(Modifier.width(6.dp)); Text("Eliminar") }
+                        shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.8f))) {
+                        Glyph(R.drawable.ic_trash); Spacer(Modifier.width(6.dp)); Text("Eliminar")
+                    }
                     Button(onClick = { submitted = true; save(original, name.trim(), color) }, enabled = !busy && valid && changed,
                         shape = RoundedCornerShape(16.dp), modifier = Modifier.weight(1f).heightIn(min = 52.dp),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)) { Text(if (original == null) "Crear perfil" else "Guardar") }
@@ -506,7 +533,10 @@ private val DarkPalette = darkColorScheme(
         Row(Modifier.fillMaxWidth().selectableGroup().semantics { contentDescription = "Apariencia" },
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ThemeMode.entries.forEach { mode ->
-                ChoiceChip(mode.label, mode == themeMode, { onThemeChange(mode) }, Modifier.weight(1f).heightIn(min = 48.dp))
+                ChoiceChip(mode.label, mode == themeMode, { onThemeChange(mode) },
+                    Modifier.weight(1f).height(44.dp),
+                    selectedColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    selectedContentColor = MaterialTheme.colorScheme.onSurface)
             }
         }
         SettingRow(R.drawable.ic_key, "Autocompletado", if (enabled) "Activo" else "Desactivado", enable)
@@ -542,10 +572,18 @@ private val DarkPalette = darkColorScheme(
 }
 
 /** One visual language for every single-selection control, in both color schemes. */
-@Composable private fun ChoiceChip(label: String, chosen: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, accent: AccountAccent? = null) {
+@Composable private fun ChoiceChip(
+    label: String,
+    chosen: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    accent: AccountAccent? = null,
+    selectedColor: Color? = null,
+    selectedContentColor: Color? = null,
+) {
     val paint = accent?.let { accentPaint(it) }
-    val container by animateColorAsState(if (chosen) paint?.container ?: MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, label = "choice background")
-    val foreground by animateColorAsState(if (chosen) paint?.text ?: MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, label = "choice foreground")
+    val container by animateColorAsState(if (chosen) paint?.container ?: selectedColor ?: MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, label = "choice background")
+    val foreground by animateColorAsState(if (chosen) paint?.text ?: selectedContentColor ?: MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, label = "choice foreground")
     Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = container, contentColor = foreground,
         shadowElevation = if (chosen) 3.dp else 0.dp,
         border = if (chosen) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),

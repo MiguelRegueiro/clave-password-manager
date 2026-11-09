@@ -1,0 +1,103 @@
+name: Release Android APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            native/**/*.gradle.kts
+            native/gradle.properties
+            native/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+          log-accepted-android-sdk-licenses: false
+
+      - name: Restore release signing key
+        env:
+          CLAVE_KEYSTORE_BASE64: ${{ secrets.CLAVE_KEYSTORE_BASE64 }}
+          CLAVE_STORE_PASSWORD: ${{ secrets.CLAVE_STORE_PASSWORD }}
+        run: |
+          if [[ -z "$CLAVE_KEYSTORE_BASE64" || -z "$CLAVE_STORE_PASSWORD" ]]; then
+            echo "::error::Set CLAVE_KEYSTORE_BASE64 and CLAVE_STORE_PASSWORD before releasing."
+            exit 1
+          fi
+
+          umask 077
+          mkdir -p .signing
+          printf '%s' "$CLAVE_KEYSTORE_BASE64" | base64 --decode > .signing/clave.jks
+          printf 'storePassword=%s\n' "$CLAVE_STORE_PASSWORD" > .signing/signing.properties
+
+      - name: Verify tag version
+        if: github.event_name == 'push'
+        run: |
+          version_name="$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' native/app/build.gradle.kts)"
+          expected_tag="v${version_name}"
+
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version_name."
+            exit 1
+          fi
+
+      - name: Build release APK
+        run: ./build-apk.sh
+
+      - name: Prepare distributable files
+        run: |
+          safe_ref="${GITHUB_REF_NAME//\//-}"
+          asset_name="clave-${safe_ref}.apk"
+          distribution_dir="artifacts/release"
+          mkdir -p "$distribution_dir"
+          cp artifacts/clave.apk "$distribution_dir/$asset_name"
+          sha256sum "$distribution_dir/$asset_name" > "$distribution_dir/$asset_name.sha256"
+          printf 'RELEASE_ASSET=%s\n' "$distribution_dir/$asset_name" >> "$GITHUB_ENV"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: clave-${{ github.ref_name }}
+          path: artifacts/release/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          checksum_file="${RELEASE_ASSET}.sha256"
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" "$RELEASE_ASSET" "$checksum_file" --clobber
+          else
+            gh release create "$TAG_NAME" "$RELEASE_ASSET" "$checksum_file" \
+              --title "Clave $TAG_NAME" \
+              --generate-notes
+          fi

@@ -8,14 +8,16 @@ if [[ "${1:-}" == "--help" ]]; then
 fi
 jdk_dir=""
 for candidate in "${CLAVE_JAVA_HOME:-}" "${JAVA_HOME:-}" "$project_dir/.toolchains/jdk-17" /usr/lib/jvm/* "${HOME}/.jdks/"* "${HOME}/.sdkman/candidates/java/"* /Library/Java/JavaVirtualMachines/*/Contents/Home; do
+  [[ -n "$candidate" ]] || continue
   [[ -x "$candidate/bin/java" && -x "$candidate/bin/javac" ]] || continue
-  if "$candidate/bin/java" -version 2>&1 | grep -q 'version "17[.\"]'; then
+  java_version="$("$candidate/bin/java" -version 2>&1 || true)"
+  if [[ "$java_version" == *'version "17.'* || "$java_version" == *'version "17"'* ]]; then
     jdk_dir="$candidate"
     break
   fi
 done
 if [[ -z "$jdk_dir" ]]; then
-  printf '%s\n' 'JDK 17 not found. On Fedora with the Adoptium repository enabled:' '  sudo dnf install temurin-17-jdk' 'Or set CLAVE_JAVA_HOME to a JDK 17 directory.' >&2
+  printf '%s\n' 'JDK 17 not found. Install a JDK 17 distribution or set CLAVE_JAVA_HOME to its directory.' >&2
   exit 1
 fi
 export JAVA_HOME="$jdk_dir"

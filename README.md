@@ -1,4 +1,4 @@
-# Clave
+<h1 align="left"><img src="logo.png" width="64" alt="Clave logo" align="absmiddle" />&nbsp;Clave</h1>
 
 Aplicación nativa de Android para gestionar contraseñas. Guarda las cuentas de forma local y permite generar contraseñas seguras y completar credenciales mediante Autofill.
 
